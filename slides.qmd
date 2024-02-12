@@ -1,58 +1,232 @@
 ---
 title: "Denoising diffusion using Stochastic Differential Equations"
 author: "LIX Seminar"
-format: revealjs
-filters:
-  - pseudocode
+format:
+  revealjs
 ---
 
 ## Reminders: score modeling
 
 - Bypasses the normalizing constant problem
 - Allows for sampling using Langevin algorithm
+- We can learn a score function $s_\theta(x)$
+
+## Evolution of the score modeling approach {auto-animate="true"}
+
+<!-- ::: {data-timeline="welcome.json"}
+::: -->
+
+::: columns
 
 
+::: {.column width="50%"}
+First proposal of score matching
+
+- <span style="color:red;">The quantity $Trace\left(\nabla_x^2 \log p_\theta(x)\right)$ is difficult to compute</span>
+- <span style="color:red;">The score is untractable in low density areas</span>
+:::
+
+::: {.column width="50%" .r-fit-text}
+Given $\{x_1, x_2, ..., x_T\} \sim p_\text{data}(x)$
+Objective: Minimize the quantity
+$$ E_{p(x)}\left[\frac{1}{2}|| \log p_{\theta}(x)||² + Trace\left(\nabla_x^2 \log p_\theta(x)\right)\right]$$
+
+![](images/score_density.png)
+:::
+:::
+
+## Evolution of the score modeling approach {auto-animate="true"}
+
+<!-- ::: {data-timeline="welcome.json"}
+::: -->
+
+::: columns
+
+
+::: {.column width="50%"}
+First proposal of score matching
+
+Learning the score of a noisy distribution
+
+- <span style="color:red;">No score of noise-free distribution</span>
+:::
+
+::: {.column width="50%"}
+![](images/noisy_distribution.png)
+:::
+:::
+
+## Evolution of the score modeling approach {auto-animate="true"}
+
+<!-- ::: {data-timeline="welcome.json"}
+::: -->
+
+::: columns
+
+
+::: {.column width="50%"}
+- First proposal of score matching
+- Learning the score of a noisy distribution
+- Denoising diffusion models
+- Gradually decrease noise in the distribution  
+- Multiple variants of the DDPM algorithm we know
+
+:::
+
+::: {.column width="50%"}
+![](images/multi_scale.jpg)
+:::
+:::
+
+## Evolution of the score modeling approach {auto-animate="true"}
+
+<!-- ::: {data-timeline="welcome.json"}
+::: -->
+
+::: columns
+
+
+::: {.column width="50%"}
+- First proposal of score matching
+- Learning the score of a noisy distribution
+- Denoising diffusion models
+- DDPM beats GAN!
+
+:::
+
+::: {.column width="50%"}
+![](images/kanagawa.jpg)
+:::
+:::
 
 ## What is DDPM?
+- Forward process
+- Backward process 
+- A denoiser $\epsilon_\theta(., t)$ 
+- A simple training objective $L_\text{simple}=\left|\left|\epsilon-\epsilon_\theta\left(\underbrace{\sqrt{\bar{\alpha_t}}x_0+\sqrt{1-\bar{\alpha_t}}\epsilon}_{\text{Forward estimate of } x_t \text{ given } x_0},t\right)\right|\right|^2$
+- This objective is equivalent to the score matching objective
 
-A denoiser $\epsilon_\theta(., t)$ 
-A simple training objective 
-$L_{simple} = || $
 
 ## Algorithm
 
-```pseudocode
-#| label: alg-quicksort
-#| html-indent-size: "1.2em"
-#| html-comment-delimiter: "//"
-#| html-line-number: true
-#| html-line-number-punc: ":"
-#| html-no-end: false
-#| pdf-placement: "htb!"
-#| pdf-line-number: true
 
-\begin{algorithm}
-\caption{Quicksort}
-\begin{algorithmic}
-\Procedure{Quicksort}{$A, p, r$}
-  \If{$p < r$}
-    \State $q = $ \Call{Partition}{$A, p, r$}
-    \State \Call{Quicksort}{$A, p, q - 1$}
-    \State \Call{Quicksort}{$A, q + 1, r$}
-  \EndIf
-\EndProcedure
-\Procedure{Partition}{$A, p, r$}
-  \State $x = A[r]$
-  \State $i = p - 1$
-  \For{$j = p, \dots, r - 1$}
-    \If{$A[j] < x$}
-      \State $i = i + 1$
-      \State exchange
-      $A[i]$ with     $A[j]$
-    \EndIf
-    \State exchange $A[i]$ with $A[r]$
-  \EndFor
-\EndProcedure
-\end{algorithmic}
-\end{algorithm}
+## Questions/Problems
+
+- Is $L_\text{simple}$ really the best possible loss?
+- Usually, $T$ needs to be fixed before training 
+- Can we fasten the sampling, ideally without needed re-training? 
+- Can we model the data in a deterministic way using score modeling?
+
+. . . 
+
+Proposed solution: Score modeling using Stochastic Differential Equations!
+
+## Ordinary Differential Equations (ODE)
+::: columns
+
+
+::: {.column width="20%".r-fit-text}
+Equations of functions, of the form $\frac{dx}{dt} = f(x, t)$ (order 1).
+
+
+- Unique solution for any initial condition $x(t_0)$
+- Geometric interpretation using vector fields 
+
+:::
+
+::: {.column width="80%"}
+
+
+<iframe src="https://www.geogebra.org/classic/v88mtcwe?embed" width="800" height="600" allowfullscreen style="border: 1px solid #e4e4e4;border-radius: 4px;" frameborder="0"></iframe>
+
+:::
+:::
+
+## Stochastic diffential equations (SDE)
+
+Equation of time-dependent stochastic processes, noted $X_t$.
+
+. . . 
+
+They are of the form $dx = \underbrace{f(x, t)dt}_{\text{"drift" term}} + \underbrace{g(t) dW_t}_{\text{"diffusion" term}}$,
+
+where $W_t$ is a "standard Wiener process" or Brownian motion.
+
+::: columns
+They are used in 
+
+::: {.column width="20%".r-fit-text}
+- Finance
+- Biological analysis
+- Shape analysis
+
+:::
+
+::: {.column width="80%"}
+
+
+<iframe src="https://www.geogebra.org/classic/v88mtcwe?embed" width="800" height="600" allowfullscreen style="border: 1px solid #e4e4e4;border-radius: 4px;" frameborder="0"></iframe>
+
+:::
+:::
+
+## Brownian motion 
+
+```{python}
+from IPython.display import HTML
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
+import numpy as np
+
+fig = plt.figure(figsize=(25, 10))
+ax = plt.axes(xlim=(0, 1))
+line, = ax.step([], [], where='mid', color='#0492C2')
+
+# formatting options
+ax.set_xticks(np.linspace(0,1,11))
+ax.set_xlabel('Time', fontsize=30)
+ax.set_ylabel('Value', fontsize=30)
+ax.tick_params(labelsize=22)
+ax.grid(True, which='major', linestyle='--', color='black', alpha=0.6)
+ax.set_ylim((-2, 2))
+def brownian_motion(N, N_tot, T, h):
+    """
+    Simulates a Brownian motion
+    :param int N : the number of discrete steps
+    :param int T: the number of continuous time steps
+    :param float h: the variance of the increments
+    """
+    dt = 1. * T/N_tot  # the normalizing constant
+    random_increments = np.random.normal(0.0, 1.0 * h, N)*np.sqrt(dt)  # the epsilon values
+    brownian_motion = np.cumsum(random_increments)  # calculate the brownian motion
+    brownian_motion = np.insert(brownian_motion, 0, 0.0) # insert the initial condition
+
+    return brownian_motion, random_increments
+
+N = 5000 # the number of discrete steps
+T = 1 # the number of continuous time steps
+h = 1 # the variance of the increments
+dt = 1.0 * T/N  # total number of time steps
+n_frames = 100
+
+# initialization function 
+def init():
+    line.set_data([], [])
+    return line,
+
+# animation function 
+def animate(i):
+    np.random.seed(42)
+    N_c = int(N/n_frames)
+    y, epsilon = brownian_motion((i + 1) * N_c, N, 1 ,1)
+    tr = np.linspace(0.0, dt * (i + 1) * N_c, (i+1)*N_c+1)
+    ax.set_title('Brownian Motion, step'.format((i + 1) * 10), fontsize=40)
+    
+
+    line.set_data(list(tr), list(y))
+    return line,
+
+# call the animator	 
+anim = FuncAnimation(fig, animate, init_func=init, frames=n_frames, interval=100, blit=True)
+HTML(anim.to_jshtml())
 ```
