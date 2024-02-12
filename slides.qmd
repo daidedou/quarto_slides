@@ -170,6 +170,14 @@ They are used in
 :::
 :::
 
+## Differences between SDE and ODE
+
+- Given an initial condition, an SDE has now multiple possible realizations!
+
+- The initial condition is now always $x_0$, the time only goes Forward
+
+- Assuming we can solve the SDE, we can compute a reverse process that takes us back to the initial distribution
+
 ## Brownian motion 
 
 ```{python}
@@ -207,7 +215,7 @@ N = 5000 # the number of discrete steps
 T = 1 # the number of continuous time steps
 h = 1 # the variance of the increments
 dt = 1.0 * T/N  # total number of time steps
-n_frames = 100
+n_frames = 1000
 
 # initialization function 
 def init():
@@ -228,5 +236,10 @@ def animate(i):
 
 # call the animator	 
 anim = FuncAnimation(fig, animate, init_func=init, frames=n_frames, interval=100, blit=True)
-HTML(anim.to_jshtml())
+HTML(anim.to_html5_video())
 ```
+
+
+## Stochastic Differential Equation example
+
+Previous example 
