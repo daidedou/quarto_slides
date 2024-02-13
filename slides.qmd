@@ -4,17 +4,24 @@ author: "LIX Seminar"
 format:
   revealjs
 css: styles.css
+bibliography: slides.bib
 ---
 
 
 
 ## Reminders: score modeling
 
+The score function of a probability distribution with density $p(x)$ is the gradient of the log-density:
+$$
+\nabla_x log p(x)
+$$
+
+Working with this quantity has several advantages:
 - Bypasses the normalizing constant problem
 - Allows for sampling using Langevin algorithm
-- We can learn a score function $s_\theta(x)$
+- It is possible to learn $s_\theta(x) \sim \nabla_x log p(x)$
 
-## Evolution of the score modeling approach {auto-animate="true"}
+## Evolution of the score modeling approach {auto-animate="true" .smaller}
 
 <!-- ::: {data-timeline="welcome.json"}
 ::: -->
@@ -23,7 +30,7 @@ css: styles.css
 
 
 ::: {.column width="50%"}
-First proposal of score matching
+Initial proposal: score matching[@hyvarinen2005estimation]
 
 - <span style="color:red;">The quantity $Trace\left(\nabla_x^2 \log p_\theta(x)\right)$ is difficult to compute</span>
 - <span style="color:red;">The score is untractable in low density areas</span>
@@ -38,7 +45,7 @@ $$ E_{p(x)}\left[\frac{1}{2}|| \log p_{\theta}(x)||² + Trace\left(\nabla_x^2 \l
 :::
 :::
 
-## Evolution of the score modeling approach {auto-animate="true"}
+## Evolution of the score modeling approach {auto-animate="true" .smaller}
 
 <!-- ::: {data-timeline="welcome.json"}
 ::: -->
@@ -47,9 +54,9 @@ $$ E_{p(x)}\left[\frac{1}{2}|| \log p_{\theta}(x)||² + Trace\left(\nabla_x^2 \l
 
 
 ::: {.column width="50%"}
-First proposal of score matching
+Initial proposal: score matching[@hyvarinen2005estimation]
 
-Learning the score of a noisy distribution
+Learning the score of a noisy distribution[@vincent2011connection]
 
 <span style="color:rgb(219, 79, 79); font-size: smaller;">No score of noise-free distribution</span>
 :::
@@ -68,15 +75,14 @@ Learning the score of a noisy distribution
 
 
 ::: {.column width="50%"}
-First proposal of score matching
+Initial proposal: score matching[@hyvarinen2005estimation]
 
-Learning the score of a noisy distribution
+Learning the score of a noisy distribution[@vincent2011connection]
 
-Denoising diffusion models, annealed Langevin dynamics
+Denoising diffusion models[@sohl2015deep], annealed Langevin dynamics[@song2019generative]
 
-Gradually decrease noise in the distribution
-
-Multiple variants of the DDPM algorithm we know
+- Gradually decrease noise in the distribution
+- Multiple variants of the DDPM algorithm we know
 
 :::
 
@@ -85,7 +91,7 @@ Multiple variants of the DDPM algorithm we know
 :::
 :::
 
-## Evolution of the score modeling approach {auto-animate="true"}
+## Evolution of the score modeling approach {auto-animate="true" .smaller}
 
 <!-- ::: {data-timeline="welcome.json"}
 ::: -->
@@ -94,22 +100,25 @@ Multiple variants of the DDPM algorithm we know
 
 
 ::: {.column width="50%"}
-- First proposal of score matching
-- Learning the score of a noisy distribution
-- Denoising diffusion models, annealed Langevin dynamics
-- DDPM beats GAN!
+Initial proposal: score matching[@hyvarinen2005estimation]
+
+Learning the score of a noisy distribution[@vincent2011connection]
+
+Denoising diffusion models[@sohl2015deep], annealed Langevin dynamics[@song2019generative]
+
+DDPM beats GAN[@ho2020denoising]!
 
 :::
 
 ::: {.column width="50%"}
-![](images/kanagawa.jpg)
+![](images/samples_ddpm.png)
 :::
 :::
 
 ## What is DDPM?
 - Forward process
 - Backward process 
-- A denoiser $\epsilon_\theta(., t)$ 
+- A denoiser $\epsilon_\theta(., t)$, parameterizing the score function
 - A simple training objective $L_\text{simple}=\left|\left|\epsilon-\epsilon_\theta\left(\underbrace{\sqrt{\bar{\alpha_t}}x_0+\sqrt{1-\bar{\alpha_t}}\epsilon}_{\text{Forward estimate of } x_t \text{ given } x_0},t\right)\right|\right|^2$
 - This objective is equivalent to the score matching objective
 
@@ -120,13 +129,13 @@ Multiple variants of the DDPM algorithm we know
 ## Questions/Problems
 
 - Can we unify DDPM and other approaches in a common framework?
-- Usually, $T$ needs to be fixed before training 
+- Number of timesteps $T$ needs to be fixed before training 
 - Can we fasten the sampling, ideally without needed re-training? 
 - Can we model the data in a deterministic way using score modeling?
 
 . . . 
 
-Proposed solution: Score modeling using Stochastic Differential Equations!
+Proposed solution: Score modeling using Stochastic Differential Equations[@song2021scorebased]! 
 
 ## Ordinary Differential Equations (ODE)
 ::: columns
@@ -159,9 +168,11 @@ They are of the form $dx = \underbrace{f(x, t)dt}_{\text{"drift" term}} + \under
 
 where $W_t$ is a "standard Wiener process" or Brownian motion.
 
-::: columns
-They are used in 
 
+They are used in many domains (finance, physics, biology, and even shape analysis)
+
+<!-- 
+::: columns
 ::: {.column width="20%".r-fit-text}
 - Finance
 - Biological analysis
@@ -175,7 +186,7 @@ They are used in
 <iframe src="https://www.geogebra.org/classic/v88mtcwe?embed" width="800" height="600" allowfullscreen style="border: 1px solid #e4e4e4;border-radius: 4px;" frameborder="0"></iframe>
 
 :::
-:::
+::: -->
 
 ## Differences between SDE and ODE
 
@@ -257,7 +268,7 @@ def animate(i):
 video_file = 'animation.mp4'
 if not os.path.exists(video_file):
     anim = FuncAnimation(fig, animate, init_func=init, frames=n_frames, interval=100, blit=True)
-    FFwriter = FFMpegWriter(fps=10)
+    FFwriter = FFMpegWriter(fps=30)
     anim.save('animation.mp4', writer = FFwriter)
 plt.close()
 ```
@@ -333,7 +344,7 @@ where the time is flowing backwards, and $\bar{w}$ is a backward Wiener process.
 
 ## "Variance Exploding" SDE {.scrollable}
 
-Denoising Score matching of 2019. We perturb the data by adding noise $\tilde{x}_i \sim \mathcal{N}(x, \sigma_i² I). The forward process is such that 
+This formulation is equivalent to denoising score matching of [@song2019generative]. We perturb the data by adding noise $\tilde{x}_i \sim \mathcal{N}(x, \sigma_i² I). The forward process is such that 
 
 $$
 x_i = x_{i-1} + \sqrt{\sigma_i² - \sigma_{i-1}² z_{i-1}}, z_{i-1} \sim \mathcal{N}(0, I)
@@ -417,7 +428,7 @@ Uniqueness: a data sample $x(O)$ has a unique "latent" corresponding point $x(T)
 
 ![](images/interpolation.png)
 
-- Second consequence: the model doesn't matter
+- Second consequence: the choice of the model doesn't matter
 
 ![](images/latent_unique.png)
 
@@ -427,4 +438,6 @@ We can use well established solvers. It reduces the number of evaluation steps
 
 ![Samples of images, with different number of network evaluations](images/number_evaluations.png)
 
-Compared to stochastic sampling, it reduces the number of needed evaluations from $\mathcal{O}(d)$ to $\mathcal{O}(\sqrt{d})$, where $d$ is the dimension of the data.
+Compared to stochastic sampling, it reduces the number of needed evaluations from $\mathcal{O}(d)$ to $\mathcal{O}(\sqrt{d})$, where $d$ is the dimension of the data[@chen2023the].
+
+## References
