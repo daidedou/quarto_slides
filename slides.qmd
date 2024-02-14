@@ -13,13 +13,13 @@ bibliography: slides.bib
 
 The score function of a probability distribution with density $p(x)$ is the gradient of the log-density:
 $$
-\nabla_x log p(x)
+\nabla_x \log p(x)
 $$
 
 Working with this quantity has several advantages:
 - Bypasses the normalizing constant problem
 - Allows for sampling using Langevin algorithm
-- It is possible to learn $s_\theta(x) \sim \nabla_x log p(x)$
+- It is possible to learn $s_\theta(x) \sim \nabla_x \log p(x)$
 
 ## Evolution of the score modeling approach {auto-animate="true" .smaller}
 
@@ -111,7 +111,7 @@ DDPM beats GAN[@ho2020denoising]!
 :::
 
 ::: {.column width="50%"}
-![](images/samples_ddpm.png)
+![&nbsp;](images/samples_ddpm.png)
 :::
 :::
 
@@ -164,7 +164,9 @@ Equation of time-dependent stochastic processes, noted $X_t$.
 
 . . . 
 
-They are of the form $dx = \underbrace{f(x, t)dt}_{\text{"drift" term}} + \underbrace{g(t) dW_t}_{\text{"diffusion" term}}$,
+They are of the form 
+
+$dx = \underbrace{f(x, t)dt}_{\text{"drift" term}} + \underbrace{g(t) dW_t}_{\text{"diffusion" term}}$,
 
 where $W_t$ is a "standard Wiener process" or Brownian motion.
 
@@ -194,7 +196,7 @@ They are used in many domains (finance, physics, biology, and even shape analysi
 
 - The initial condition is now always $x_0$, the time only goes Forward
 
-- Multiple solvers exists to simulate the output of an SDE
+- Solving an SDE means looking for the trajectories denssity $p_t(x)$
 
 ## Brownian motion {.scrollable}
 
@@ -207,92 +209,145 @@ A stochastic process $W_t$ is a Wiener process, or Brownian motion, if:
 
 ```{python}
 #from IPython.display import HTML
-import matplotlib.pyplot as plt
-import os 
-from matplotlib.animation import FuncAnimation, FFMpegWriter
-import numpy as np
+# import matplotlib.pyplot as plt
+# import os 
+# from matplotlib.animation import FuncAnimation, FFMpegWriter
+# import numpy as np
 
-video_file = 'animation.mp4'
-if not os.path.exists(video_file):
-    fig = plt.figure(figsize=(25, 10))
-    ax = plt.axes(xlim=(0, 1))
-    line, = ax.step([], [], where='mid', color='#0492C2')
+# video_file = 'animation.mp4'
 
-    # formatting options
-    ax.set_xticks(np.linspace(0,1,11))
-    ax.set_xlabel('Time', fontsize=30)
-    ax.set_ylabel('Value', fontsize=30)
-    ax.tick_params(labelsize=22)
-    ax.grid(True, which='major', linestyle='--', color='black', alpha=0.6)
-    ax.set_ylim((-2, 2))
+# exists = True 
+# existing = exists and os.path.exists(video_file)
+# if not existing:
+#     fig = plt.figure(figsize=(25, 10))
+#     ax = plt.axes(xlim=(0, 1))
+#     line, = ax.step([], [], where='mid', color='#0492C2')
+
+#     # formatting options
+#     ax.set_xticks(np.linspace(0,1,11))
+#     ax.set_xlabel('Time', fontsize=30)
+#     ax.set_ylabel('Value', fontsize=30)
+#     ax.tick_params(labelsize=22)
+#     ax.grid(True, which='major', linestyle='--', color='black', alpha=0.6)
+#     ax.set_ylim((-2, 2))
 
 
-def brownian_motion(N, N_tot, T, h):
-    """
-    Simulates a Brownian motion
-    :param int N : the number of discrete steps
-    :param int T: the number of continuous time steps
-    :param float h: the variance of the increments
-    """
-    dt = 1. * T/N_tot  # the normalizing constant
-    random_increments = np.random.normal(0.0, 1.0 * h, N)*np.sqrt(dt)  # the epsilon values
-    brownian_motion = np.cumsum(random_increments)  # calculate the brownian motion
-    brownian_motion = np.insert(brownian_motion, 0, 0.0) # insert the initial condition
+# def brownian_motion(N, N_tot, T, h):
+#     """
+#     Simulates a Brownian motion
+#     :param int N : the number of discrete steps
+#     :param int T: the number of continuous time steps
+#     :param float h: the variance of the increments
+#     """
+#     dt = 1. * T/N_tot  # the normalizing constant
+#     random_increments = np.random.normal(0.0, 1.0 * h, N)*np.sqrt(dt)  # the epsilon values
+#     brownian_motion = np.cumsum(random_increments)  # calculate the brownian motion
+#     brownian_motion = np.insert(brownian_motion, 0, 0.0) # insert the initial condition
 
-    return brownian_motion, random_increments
+#     return brownian_motion, random_increments
 
-N = 5000 # the number of discrete steps
-T = 1 # the number of continuous time steps
-h = 1 # the variance of the increments
-dt = 1.0 * T/N  # total number of time steps
-n_frames = 1000
+# N = 1000 # the number of discrete steps
+# T = 1 # the number of continuous time steps
+# h = 1 # the variance of the increments
+# dt = 1.0 * T/N  # total number of time steps
+# n_frames = 200
 
-# initialization function 
-def init():
-    line.set_data([], [])
-    return line,
+# # initialization function 
+# def init():
+#     line.set_data([], [])
+#     return line,
 
-# animation function 
-def animate(i):
-    np.random.seed(42)
-    N_c = int(N/n_frames)
-    y, epsilon = brownian_motion((i + 1) * N_c, N, 1 ,1)
-    tr = np.linspace(0.0, dt * (i + 1) * N_c, (i+1)*N_c+1)
-    ax.set_title('Brownian Motion, time {0}'.format((i + 1) * 10), fontsize=40)
+# # animation function 
+# def animate(i):
+#     np.random.seed(42)
+#     N_c = int(N/n_frames)
+#     y, epsilon = brownian_motion((i + 1) * N_c, N, 1 ,1)
+#     tr = np.linspace(0.0, dt * (i + 1) * N_c, (i+1)*N_c+1)
+#     ax.set_title('Brownian Motion, timestep {0}'.format(int((i + 1) * N/N_c)), fontsize=40)
     
 
-    line.set_data(list(tr), list(y))
-    return line,
+#     line.set_data(list(tr), list(y))
+#     return line,
 
-# call the animator	 
+# # call the animator	 
+# video_file = 'animation.mp4'
+# if not existing:
+#     anim = FuncAnimation(fig, animate, init_func=init, frames=n_frames, interval=100, blit=True)
+#     FFwriter = FFMpegWriter(fps=30)
+#     anim.save('animation.mp4', writer = FFwriter)
+# plt.close()
+import numpy as np
+import plotly.graph_objects as go
+from scipy.stats import norm
+import io 
+from PIL import Image
+import  moviepy.editor as mpy
+import os 
+
+def plotly_fig2array(fig):
+    #convert Plotly fig to  an array
+    fig_bytes = fig.to_image(format="png", width=1400, height=700)
+    buf = io.BytesIO(fig_bytes)
+    img = Image.open(buf)
+    return np.asarray(img)
+
+
+# Parameters
+n = 300  # Number of steps
+dt = 1./n # Time step
+t = np.linspace(0, 1, n)  # Time array
+a = np.linspace(-2, 2, 100)
+rest = [None for ttt in t]
+# Brownian motion
+np.random.seed(42)
+x = np.cumsum(norm.rvs(scale=np.sqrt(dt), size=n))
+quant = max(-min(x), max(x))
+# Create Plotly figure
+fig = go.Figure(
+    data=[go.Scatter(x=[t[0]] + rest[1:], y=[x[0]] + rest[1:], mode='lines', name='Particle position x(t)'),
+         go.Scatter(y=0*a, x=0*np.exp(a), mode='lines', name='Density p(t)')],
+    layout=go.Layout(
+        xaxis=dict(range=[0, 1], autorange=False),
+        yaxis=dict(range=[-2, 2], autorange=False),
+    ),
+    
+)
+
+fig.update_xaxes(title_text="Time")
+fig.update_yaxes(title_text="x")
+fig.update_layout(title_text='Particle following a brownian motion over time', title_x=0.5)
+# Add layout and create the animation
+#fig.update_layout(showlegend=False)
+
+
+secs = 5
+def make_frame(tt):
+    if tt!=0:
+        k = int(tt * n/secs)
+        fig.update_traces(x=list(t[:k+1])+rest[k+1:], y=list(x[:k+1])+rest[k+1:], selector = ({'name':'Particle position x(t)'}))#,
+        fig.update_traces(x=-np.exp(-(a**2)/t[k])*0.05+t[k], y=a, selector = ({'name':'Density p(t)'}))
+            #go.Scatter(x=-np.exp(-(a**2)/t[k])*0.05+t[k], y=a, mode='lines', name='Density p(t)')])
+    return plotly_fig2array(fig)
+
+
 video_file = 'animation.mp4'
-if not os.path.exists(video_file):
-    anim = FuncAnimation(fig, animate, init_func=init, frames=n_frames, interval=100, blit=True)
-    FFwriter = FFMpegWriter(fps=30)
-    anim.save('animation.mp4', writer = FFwriter)
-plt.close()
+exists = True 
+existing = exists and os.path.exists(video_file) 
+if not existing:
+    animation = mpy.VideoClip(make_frame, duration=secs)
+    animation.write_gif("temp.gif", fps=30)
+    clip = mpy.VideoFileClip("temp.gif")
+    clip.write_videofile(video_file)
 ```
 <!-- {{< video animation.mp4 >}} -->
 ![](animation.mp4)
 
-We can repeat over 100 realisations. This will give this kind of image:
+If we sample 100 trajectories, we obtain:
 ```{python}
-#from IPython.display import HTML
-import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 import os 
-from matplotlib.animation import FuncAnimation, FFMpegWriter
 import numpy as np
-
-fig = plt.figure(figsize=(25, 10))
-ax = plt.axes(xlim=(0, 1))
-
-# formatting options
-ax.set_xticks(np.linspace(0,1,11))
-ax.set_xlabel('Time', fontsize=30)
-ax.set_ylabel('Value', fontsize=30)
-ax.tick_params(labelsize=22)
-ax.grid(True, which='major', linestyle='--', color='black', alpha=0.6)
-ax.set_ylim((-2, 2))
+import pandas as pd
 
 
 def brownian_motion(N, N_tot, T, h):
@@ -314,12 +369,25 @@ T = 1 # the number of continuous time steps
 h = 1 # the variance of the increments
 dt = 1.0 * T/N  # total number of time steps
 n_lines = 100
+fig = go.Figure()
+
 for i in range(n_lines):
     y, epsilon = brownian_motion(N, N, 1 ,1)
     tr = np.linspace(0.0, 1, N+1)
-    ax.plot(tr, y)
+    fig.add_trace(go.Scatter(x=tr, y=y,
+                    mode='lines')) 
 
-plt.show()
+fig.add_trace(go.Scatter(x=tr, y=np.sqrt(tr),
+                    mode='lines', line=dict(color='firebrick', width=4)))
+fig.add_trace(go.Scatter(x=tr, y=-np.sqrt(tr),
+                    mode='lines', line=dict(color='firebrick', width=4)))
+
+fig.update_traces(showlegend=False) 
+fig.update_layout(title_text='100 brownian motions', title_x=0.5)
+fig.update_xaxes(title_text="Time")
+fig.update_yaxes(title_text="x")
+fig.show()
+
 ```
 
 ## Stochastic Differential Equation example
@@ -344,10 +412,10 @@ where the time is flowing backwards, and $\bar{w}$ is a backward Wiener process.
 
 ## "Variance Exploding" SDE {.scrollable}
 
-This formulation is equivalent to denoising score matching of [@song2019generative]. We perturb the data by adding noise $\tilde{x}_i \sim \mathcal{N}(x, \sigma_i² I). The forward process is such that 
+This formulation is equivalent to denoising score matching of [@song2019generative]. We perturb the data by adding noise $\tilde{x}_i \sim \mathcal{N}(x, \sigma_i² I)$. The forward process is such that 
 
 $$
-x_i = x_{i-1} + \sqrt{\sigma_i² - \sigma_{i-1}² z_{i-1}}, z_{i-1} \sim \mathcal{N}(0, I)
+x_i = x_{i-1} + \sqrt{\sigma_i² - \sigma_{i-1}²}z_{i-1}, z_{i-1} \sim \mathcal{N}(0, I)
 $$
 
 Seen as the discretization of a continuous process, it becomes: 
@@ -394,12 +462,12 @@ $$
 
 With original data distribution -> two diracs
 
-![](images/variance_sdes.png)
+![&nbsp; ](images/variance_sdes.png)
 
 The variance exploding has more curvature when approaching data $\to$ DDPM obtains better samples with fewer steps.
 
 ::: {.smaller}
-Note: other samplers, such as DDIM or EDM can show even better curvature
+Note: other samplers, such as DDIM[@song2020denoising] or EDM[@Karras2022edm] can show even better curvature
 :::
 
 ## Results 
@@ -418,15 +486,17 @@ $$
 dx = \left[f(x, t) - g(t) \nabla_x \log p(x)\right] dt,
 $$
 
-share the same marginals $p_t(x)$ if $p_O$ or $p_T$ is given.
+share the same marginals $p_t(x)$ as the SDE solution, if $p_0$ or $p_T$ is given[@maoutsa2020interacting].
 
 ## Advantages of the ODE {.scrollable}
 
-Uniqueness: a data sample $x(O)$ has a unique "latent" corresponding point $x(T)$.$
+Uniqueness: a data sample $x(0)$ has a unique "latent" corresponding point $x(T)$.
 
 - First consequence: "latent" manipulation of images
 
 ![](images/interpolation.png)
+
+Note : We can't manipulate the latents in a differentiable way. You would need a different approach, such as score distillation sampling or ControlNet
 
 - Second consequence: the choice of the model doesn't matter
 
@@ -439,5 +509,19 @@ We can use well established solvers. It reduces the number of evaluation steps
 ![Samples of images, with different number of network evaluations](images/number_evaluations.png)
 
 Compared to stochastic sampling, it reduces the number of needed evaluations from $\mathcal{O}(d)$ to $\mathcal{O}(\sqrt{d})$, where $d$ is the dimension of the data[@chen2023the].
+
+## Summary 
+
+Findings of the paper:
+
+- Most approach of score modeling can be unified in a common framework, including DDPM
+- This framework allows for better sample quality and Higher resolution for images
+- The ODE formulation allows for high sampling speed, without needing retraining
+
+## Potential follow-up works
+
+- Better SDE, training and even faster sampling : EDM[@Karras2022edm]
+- Differentiable image generation (for text to 3D): Score Distillation Sampling[@poole2022dreamfusion]
+- Controllable image generation : ControlNet[@zhang2023adding]
 
 ## References
