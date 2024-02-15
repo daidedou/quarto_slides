@@ -17,6 +17,7 @@ $$
 $$
 
 Working with this quantity has several advantages:
+
 - Bypasses the normalizing constant problem
 - Allows for sampling using Langevin algorithm
 - It is possible to learn $s_\theta(x) \sim \nabla_x \log p(x)$
@@ -32,8 +33,9 @@ Working with this quantity has several advantages:
 ::: {.column width="50%"}
 Initial proposal: score matching[@hyvarinen2005estimation]
 
-- <span style="color:red;">The quantity $Trace\left(\nabla_x^2 \log p_\theta(x)\right)$ is difficult to compute</span>
-- <span style="color:red;">The score is untractable in low density areas</span>
+<span style="color:rgb(219, 79, 79); font-size: smaller;">The quantity $Trace\left(\nabla_x^2 \log p_\theta(x)\right)$ is difficult to compute</span>
+
+<span style="color:rgb(219, 79, 79); font-size: smaller;">The score is untractable in low density areas</span>
 :::
 
 ::: {.column width="50%" .r-fit-text}
@@ -62,7 +64,18 @@ Learning the score of a noisy distribution[@vincent2011connection]
 :::
 
 ::: {.column width="50%"}
-![&nbsp;](images/noisy_distribution.png)
+
+::: {.r-stack}
+
+<figure class="align-center">
+  <img src="images/noisy_distribution.png" style="width:300px;"/>
+  <figcaption>Noisy distribution</figcaption>
+</figure>
+
+:::
+
+
+Loss:   $\mathbb{E}\left[\frac{1}{2}\left|\left| s_\theta(\tilde{x})- \frac{\tilde{x}-x}{\sigma²}\right|\right|²\right]$
 :::
 :::
 
@@ -82,13 +95,23 @@ Learning the score of a noisy distribution[@vincent2011connection]
 Denoising diffusion models[@sohl2015deep], annealed Langevin dynamics[@song2019generative]
 
 - Gradually decrease noise in the distribution
-- Multiple variants of the DDPM algorithm we know
+- Can obtain non noisy samples
 
 :::
 
 ::: {.column width="50%"}
 ![Annealed Langevin sampling](images/multi_scale.jpg)
+
+::: {.r-fit-text}
+
+Noise conditional score model, with objective :
+$$
+\frac{1}{L} \sum_{i=1}^L \lambda(\sigma_i) \mathbb{E}\left[\left\lvert\left\lvert s_\theta(x_i, \sigma_i) - \frac{(\tilde{x}_i - x_i)}{\sigma_i²}\right\rvert\right\rvert ² \right]
+$$
 :::
+
+:::
+
 :::
 
 ## Evolution of the score modeling approach {auto-animate="true" .smaller}
@@ -115,16 +138,20 @@ DDPM beats GAN[@ho2020denoising]!
 :::
 :::
 
-## What is DDPM?
-- Forward process
-- Backward process 
+## What is DDPM? 
+
+::: {.r-fit-text}
+- Forward process $x_t = \sqrt{1-\beta_t} x_{t-1} +  \sqrt{\beta_t} z_t$
 - A denoiser $\epsilon_\theta(., t)$, parameterizing the score function
+- Backward process $x_{t-1} = \frac{1}{\sqrt{1-\beta_t}} \left(x_t - \frac{\beta_t}{\sqrt{1-\alpha_t\alpha_{t-1}}}\epsilon_\theta(x_t, t)\right) + \sigma_t z_t$
 - A simple training objective $L_\text{simple}=\left|\left|\epsilon-\epsilon_\theta\left(\underbrace{\sqrt{\bar{\alpha_t}}x_0+\sqrt{1-\bar{\alpha_t}}\epsilon}_{\text{Forward estimate of } x_t \text{ given } x_0},t\right)\right|\right|^2$
-- This objective is equivalent to the score matching objective
+- This objective is equivalent to the denoising score matching objective
+:::
 
 
 ## Algorithm
 
+![&nbsp;](images/DDPM-algo.png)
 
 ## Questions/Problems
 
@@ -416,22 +443,45 @@ $$
 
 where the time is flowing backwards, and $\bar{w}$ is a backward Wiener process.
 
+## Illustration with images {.scrollable}
+
+![Generate data from noise by reversing the perturbation procedure.](images/denoise_vp_2.gif)
+
+![Forward and backward SDEs illustated](images/sde_schematic.jpg)
+
+## Reverse SDE/Annealed Langevin Dynamics 
+
+The Langevin dynamics uses the following updates:
+
+$$
+x_{t+1} \leftarrow x_t + \epsilon s_\theta (x, t) + \sqrt{2\epsilon} z_t
+$$
+
+Which is similar to the reverse SDE ($f(x, t)= 0$): 
+$$
+dx = - g(t)² \nabla_x \log p_t(x) dt + g(t) d\bar{w},
+$$
+
 ## "Variance Exploding" SDE {.scrollable}
 
 This formulation is equivalent to denoising score matching of [@song2019generative]. We perturb the data by adding noise $\tilde{x}_i \sim \mathcal{N}(x, \sigma_i² I)$. The forward process is such that 
 
+::: {.r-fit-text}
 $$
 x_i = x_{i-1} + \sqrt{\sigma_i² - \sigma_{i-1}²}z_{i-1}, z_{i-1} \sim \mathcal{N}(0, I)
 $$
+:::
 
 Seen as the discretization of a continuous process, it becomes: 
 
+::: {.r-fit-text}
 $$
 \begin{align}
 x(t + \Delta t) & = x(t) + \sqrt{\sigma²(t+\Delta t) - \sigma²(t)} z(t)  \\
 & \simeq x(t) + \sqrt{\frac{d\left[\sigma²(t)\right]}{dt} \Delta t} z(t)
 \end{align}
 $$
+:::
 
 The SDE formulates as 
 $$
@@ -442,11 +492,14 @@ $$
 ## "Variance preserving" SDE {.scrollable}
 
 This formulation is equivalent to the DDPM paper. The forward process of DDPM is given by:
+
+::: {.r-fit-text}
 $$
 x_i = \sqrt{1-\beta_i} x_{i-1} + \sqrt{\beta_i} z_i = \sqrt{1-\frac{\bar{\beta}_i}{N}} x_{i-1} + \sqrt{\frac{\bar{\beta}_i}{N}} z_i 
 $$
 
 Where $\bar{\beta_i} = N \beta_i$. 
+:::
 
 Seen as the discretization of a continuous process, it becomes: 
 
@@ -458,7 +511,8 @@ x(t + \Delta t) & = \sqrt{1-\beta(t+\Delta t) \Delta t}x(t) + \sqrt{\beta(t+\Del
 & \simeq x(t) - \frac{1}{2} \beta(t) \Delta t x(t) + \sqrt{\beta(t) \Delta t} z(t)
 \end{align}
 $$
-::: 
+:::
+
 The SDE formulates as 
 $$
 dx = - \frac{1}{2} \beta(t) x dt + \sqrt{\beta(t)}dw
@@ -470,13 +524,33 @@ With original data distribution -> two diracs
 
 ![&nbsp; ](images/variance_sdes.png)
 
-The variance exploding has more curvature when approaching data $\to$ DDPM obtains better samples with fewer steps.
+The variance exploding SDE has more curvature when approaching data $\to$ DDPM obtains better samples with fewer steps.
 
-::: {.smaller}
+::: {style="font-size: 50%;"}
 Note: other samplers, such as DDIM[@song2020denoising] or EDM[@Karras2022edm] can show even better curvature
 :::
 
-## Results 
+## Comparison to discrete approach
+
+Training:
+
+- The timesteps are now sampled in a continuous way
+- No change in the loss
+
+At test time:
+
+- Possibility to use black-box SDE solvers (reduces timesteps)
+- Or use generalization of annealed Langevin (denoising + correction step)
+
+## Results
+
+![](images/table_results.png)
+
+## Results {.scrollable}
+
+![256x256 bedroom images (LSUN dataset)](images/bedroom.jpeg)
+
+![1024x1024 face images (FFHQ dataset)](images/ffhq_1024.jpeg)
 
 ## Probability flow ODE {.scrollable}
 
@@ -516,9 +590,10 @@ Uniqueness: a data sample $x(0)$ has a unique "latent" corresponding point $x(T)
 
 ![](images/interpolation.png)
 
-::: {.smaller}
+::: {style="font-size: 50%;"}
 Note : We can't manipulate the latents in a differentiable way. You would need a different approach, such as score distillation sampling[@poole2022dreamfusion] or ControlNet[@zhang2023adding]
 ::: 
+
 - Second consequence: the choice of the model doesn't matter
 
 ![](images/latent_unique.png)
@@ -531,9 +606,35 @@ We can use well established solvers. It reduces the number of evaluation steps
 
 Compared to stochastic sampling, it reduces the number of needed evaluations from $\mathcal{O}(d)$ to $\mathcal{O}(\sqrt{d})$, where $d$ is the dimension of the data[@chen2023the].
 
-## Controllable generation 
+## Summary
 
-Let $y$ a control variable. If you can define $p(x)
+![](images/teaser.jpg)
+
+## Controllable generation (inverse problems) 
+
+Let $y$, an image generated from a system $f(x) = y$.
+
+We can estimate the score of $p(x | y)$:
+
+
+::: {style="font-size: 70%;"}
+$$
+\begin{align}
+\nabla_x \log p_t(x(t)|y) &\simeq \nabla_x \log \int p_t(x(t)|y(t))p(y(t) |y)dy \\
+& \simeq \nabla_x \log p_t(x(t)|\hat{y}(t)) ;\ \ \ \ \hat{y}(t) \sim p(y(t)|y) \\
+& = \log p_t(x(t)) +  \nabla_x \log p_t(\hat{y}(t)|) \\
+& \simeq s_\theta(x(t), t) + \nabla_x \log p_t(\hat{y}(t)| x(t))
+\end{align}
+$$
+:::
+
+If the distribution $p_t(\hat{y}(t)| x(t)))$ is tractable, we can solve the inverse problem
+
+## Controllable generation examples {.scrollable}
+
+![Colorizing gray images using controllable generation](images/colorization.png)
+
+![Inpaiting of images using controllable generation](images/inpainting.png)
 
 ## Summary 
 
@@ -541,7 +642,7 @@ Findings of the paper:
 
 - Most approach of score modeling can be unified in a common framework, including DDPM
 - This framework allows for better sample quality and Higher resolution for images
-- The ODE formulation allows for high sampling speed, without needing retraining
+- The ODE formulation allows for latent encoding and high sampling speed, without needing retraining
 
 ## Potential follow-up works
 
