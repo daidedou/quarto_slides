@@ -196,7 +196,7 @@ They are used in many domains (finance, physics, biology, and even shape analysi
 
 - The initial condition is now always $x_0$, the time only goes Forward
 
-- Solving an SDE means looking for the trajectories denssity $p_t(x)$
+- Solving an SDE means looking for the trajectories density $p_t(x)$
 
 ## Brownian motion {.scrollable}
 
@@ -335,9 +335,9 @@ exists = True
 existing = exists and os.path.exists(video_file) 
 if not existing:
     animation = mpy.VideoClip(make_frame, duration=secs)
-    animation.write_gif("temp.gif", fps=30)
+    animation.write_gif("temp.gif", fps=30, verbose=False, logger=None)
     clip = mpy.VideoFileClip("temp.gif")
-    clip.write_videofile(video_file)
+    clip.write_videofile(video_file, verbose=False, logger=None)
 ```
 <!-- {{< video animation.mp4 >}} -->
 ![](animation.mp4)
@@ -375,14 +375,14 @@ for i in range(n_lines):
     y, epsilon = brownian_motion(N, N, 1 ,1)
     tr = np.linspace(0.0, 1, N+1)
     fig.add_trace(go.Scatter(x=tr, y=y,
-                    mode='lines')) 
+                    mode='lines', showlegend=False)) 
 
 fig.add_trace(go.Scatter(x=tr, y=np.sqrt(tr),
-                    mode='lines', line=dict(color='firebrick', width=4)))
+                    mode='lines', line=dict(color='firebrick', width=4), name="Standard deviation (t)"))
 fig.add_trace(go.Scatter(x=tr, y=-np.sqrt(tr),
-                    mode='lines', line=dict(color='firebrick', width=4)))
+                    mode='lines', line=dict(color='firebrick', width=4), showlegend=False))
 
-fig.update_traces(showlegend=False) 
+#fig.update_traces(showlegend=False) 
 fig.update_layout(title_text='100 brownian motions', title_x=0.5)
 fig.update_xaxes(title_text="Time")
 fig.update_yaxes(title_text="x")
@@ -390,9 +390,15 @@ fig.show()
 
 ```
 
-## Stochastic Differential Equation example
+It is also the solution of the equation 
 
-## Properties of the SDE 
+$$
+dx = dw
+$$
+
+<!-- ## Stochastic Differential Equation example -->
+
+## Properties of SDEs
 
 Let the SDE be:
 
@@ -472,7 +478,7 @@ Note: other samplers, such as DDIM[@song2020denoising] or EDM[@Karras2022edm] ca
 
 ## Results 
 
-## Probability flow ODE 
+## Probability flow ODE {.scrollable}
 
 Another remarkable result: Given the following SDE: 
 
@@ -483,10 +489,24 @@ $$
 the following ODE :
 
 $$
-dx = \left[f(x, t) - g(t) \nabla_x \log p(x)\right] dt,
+dx = \left[f(x, t) - \frac{1}{2}g(t)² \nabla_x \log p_t(x)\right] dt,
 $$
 
 share the same marginals $p_t(x)$ as the SDE solution, if $p_0$ or $p_T$ is given[@maoutsa2020interacting].
+
+In the case of the 1D brownian motion, we have 
+
+$$
+\nabla_x \log p_t(x) = \frac{d}{dx}\left(-\frac{1}{2} \frac{x²}{t}\right) = -\frac{x}{t} 
+$$
+
+The ODE is:
+
+$$
+\frac{dx}{dt} = \frac{x}{2t}; \text{ so } x(t) = \alpha \sqrt{t}
+$$
+
+<iframe src="https://www.geogebra.org/m/bftcyucy?embed" width="838" height="650" allowfullscreen style="border: 1px solid #e4e4e4;border-radius: 4px;" frameborder="0"></iframe>
 
 ## Advantages of the ODE {.scrollable}
 
@@ -496,8 +516,9 @@ Uniqueness: a data sample $x(0)$ has a unique "latent" corresponding point $x(T)
 
 ![](images/interpolation.png)
 
-Note : We can't manipulate the latents in a differentiable way. You would need a different approach, such as score distillation sampling or ControlNet
-
+::: {.smaller}
+Note : We can't manipulate the latents in a differentiable way. You would need a different approach, such as score distillation sampling[@poole2022dreamfusion] or ControlNet[@zhang2023adding]
+::: 
 - Second consequence: the choice of the model doesn't matter
 
 ![](images/latent_unique.png)
@@ -509,6 +530,10 @@ We can use well established solvers. It reduces the number of evaluation steps
 ![Samples of images, with different number of network evaluations](images/number_evaluations.png)
 
 Compared to stochastic sampling, it reduces the number of needed evaluations from $\mathcal{O}(d)$ to $\mathcal{O}(\sqrt{d})$, where $d$ is the dimension of the data[@chen2023the].
+
+## Controllable generation 
+
+Let $y$ a control variable. If you can define $p(x)
 
 ## Summary 
 
